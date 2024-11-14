@@ -3,52 +3,41 @@ title: "week4md"
 output: html_document
 date: "2024-10-27"
 ---
-```{r}
-setwd("C:/Users/z1782/OneDrive - University College London/Attachments/005/w4")
-gender_data <- read.csv("HDR23-24_Composite_indices_complete_time_series.csv")
-library(sf)
-world_data <- st_read("C:/Users/z1782/OneDrive - University College London/Attachments/005/w4/World_Countries_(Generalized)_9029012925078512962.geojson")
-library(countrycode)
-gender_data$iso_a3 <- countrycode(gender_data$country, "country.name", "iso3c")
-library(ggplot2)
-ggplot(data = world_gender_data) +
-+   geom_sf(aes(fill = inequality_diff)) +
-+   theme_minimal() +
-+   labs(title = "Gender Inequality Difference (2010-2019)",
-+        fill = "Difference")
-gii_data <- gender_data %>%
-+     select(COUNTRY = country, gii_2010, gii_2019) %>%
-+     mutate(GII_Diff = gii_2019 - gii_2010)
- merged_data <- world_data %>%
-+     left_join(gii_data, by = "COUNTRY")
-library(ggplot2)
-ggplot(merged_data) +
-+     geom_sf(aes(fill = GII_Diff)) +
-+     theme_minimal() +
-+     labs(title = "Global Gender Inequality Difference (2010-2019)",
-+          fill = "Inequality Difference")
-st_write(merged_data, "World_Gender_Inequality_Diff.geojson", delete_dsn = TRUE)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-## R Markdown
+# Set working directory
+setwd("C:/Users/z1782/OneDrive - University College London/Attachments/005/w4")
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Load necessary libraries
+library(sf)
+library(tidyverse) # Includes dplyr and ggplot2
+library(countrycode)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# Read the data
+gender_data <- read.csv("HDR23-24_Composite_indices_complete_time_series.csv")
+world_data <- st_read("World_Countries_(Generalized)_9029012925078512962.geojson")
 
-```{r cars}
-summary(cars)
-```
+# Add ISO3 country codes
+gender_data$iso_a3 <- countrycode(gender_data$country, "country.name", "iso3c")
 
-## Including Plots
+# Calculate Gender Inequality Index (GII) difference
+gii_data <- gender_data %>%
+  select(COUNTRY = country, gii_2010, gii_2019) %>%
+  mutate(GII_Diff = gii_2019 - gii_2010)
 
-You can also embed plots, for example:
+# Merge data with spatial data
+merged_data <- world_data %>%
+  left_join(gii_data, by = c("COUNTRY" = "iso_a3"))
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+# Plot the data
+ggplot(merged_data) +
+  geom_sf(aes(fill = GII_Diff)) +
+  theme_minimal() +
+  labs(title = "Global Gender Inequality Difference (2010-2019)",
+       fill = "Inequality Difference")
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+# Save the merged data to a GeoJSON file
+st_write(merged_data, "World_Gender_Inequality_Diff.geojson", delete_dsn = TRUE)
+
